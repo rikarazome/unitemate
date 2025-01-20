@@ -20,5 +20,5 @@ package:
     - poetry.lock
 
 functions:
-  api_match_report:
-    handler: app/aggregation/api.handle
+  hello:
+    handler: app/hello.handle
