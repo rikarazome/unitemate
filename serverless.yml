@@ -10,6 +10,11 @@ provider:
     name: ${self:service}.sls-deployment-store
     maxPreviousDeploymentArtifacts: 3
   logRetentionInDays: 7
+  apiGateway:
+    apiKeys:
+      - name: ${sls:stage}-${self:service}-apiKey
+        value: ${ssm:/${self:service}/${sls:stage}/apiKey}
+        description: API Key for ${sls:stage}-${self:service}
   iam:
     role:
       name: ${self:service}-role-${sls:stage}
@@ -34,8 +39,57 @@ package:
     - poetry.lock
 
 functions:
-  hello:
-    handler: app/hello.handle
+  inqueue: # キューにインキューするAPI
+    handler: app/inqueue.handle
+    events:
+      - http:
+          path: v1/queue/_inqueue
+          method: post
+          private: true
+  dequeue: # キューからデキューするAPI
+    handler: app/dequeue.handle
+    events:
+      - http:
+          path: v1/queue/_dequeue
+          method: post
+          private: true
+  queue_info: # キューの情報を取得するAPI
+    handler: app/dequeue.handle
+    events:
+      - http:
+          path: v1/queue
+          method: get
+          private: true
+  match_make: # マッチメイクするバッチ
+    handler: app/match_make.handle
+    events:
+      - schedule:
+          name: ${sls:stage}-${self:service}-match-make-schedule
+          description: Schedule for match making
+          rate: cron(*/5 * * * ? *)
+  match_report: # 試合終了後の試合結果を報告するAPI
+    handler: app/match_report.handle
+    events:
+      - http:
+          path: v1/match/_report
+          method: post
+          private: true
+  match_judge: # 試合終了後、試合結果を判定するバッチ
+    handler: app/match_judge.handle
+  user_info: # ユーザ情報を返すAPI
+    handler: app/user_info.handle
+    events:
+      - http:
+          path: v1/users/{user_id}
+          method: get
+          private: true
+  rankings: # ユーザのレートランキングを返すAPI
+    handler: app/rankings.handle
+    events:
+      - http:
+          path: v1/rankings
+          method: get
+          private: true
 
 plugins:
   - serverless-python-requirements
