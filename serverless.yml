@@ -58,7 +58,7 @@ functions:
           method: post
           private: true
   queue_info: # キューの情報を取得するAPI
-    handler: app/dequeue.handle
+    handler: app/queue_info.handle
     events:
       - http:
           path: v1/queue
@@ -88,7 +88,7 @@ functions:
           method: post
           private: true
   user_delete: # ユーザを削除するAPI
-    handler: app/user_upsert.handle
+    handler: app/user_delete.handle
     events:
       - http:
           path: v1/users/{user_id}/_delete
