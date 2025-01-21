@@ -10,6 +10,20 @@ provider:
     name: ${self:service}.sls-deployment-store
     maxPreviousDeploymentArtifacts: 3
   logRetentionInDays: 7
+  iam:
+    role:
+      name: ${self:service}-role-${sls:stage}
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource:
+            - !GetAtt DynamoDBMatchQueue.Arn
+            - !Join ["", [!GetAtt DynamoDBMatchQueue.Arn, "/index/*"]]
+            - !GetAtt DynamoDBMatchTable.Arn
+            - !Join ["", [!GetAtt DynamoDBMatchTable.Arn, "/index/*"]]
+            - !GetAtt DynamoDBUserTable.Arn
+            - !Join ["", [!GetAtt DynamoDBUserTable.Arn, "/index/*"]]
 
 package:
   individually: true
@@ -26,3 +40,96 @@ functions:
 plugins:
   - serverless-python-requirements
   - serverless-prune-plugin
+
+resources:
+  Resources:
+    DynamoDBMatchQueue:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-${self:service}-match-queue
+        AttributeDefinitions:
+          - AttributeName: namespace
+            AttributeType: S
+          - AttributeName: user_id
+            AttributeType: S
+          - AttributeName: rate
+            AttributeType: "N"
+        KeySchema:
+          - AttributeName: namespace
+            KeyType: HASH
+          - AttributeName: user_id
+            KeyType: RANGE
+        LocalSecondaryIndexes:
+          - IndexName: rate_index
+            KeySchema:
+              - AttributeName: namespace
+                KeyType: HASH
+              - AttributeName: rate
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    DynamoDBMatchTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-${self:service}-matches
+        AttributeDefinitions:
+          - AttributeName: namespace
+            AttributeType: S
+          - AttributeName: match_id
+            AttributeType: "N"
+          - AttributeName: status
+            AttributeType: S
+          - AttributeName: matched_unixtime
+            AttributeType: "N"
+        KeySchema:
+          - AttributeName: namespace
+            KeyType: HASH
+          - AttributeName: match_id
+            KeyType: RANGE
+        LocalSecondaryIndexes:
+          - IndexName: status_index
+            KeySchema:
+              - AttributeName: namespace
+                KeyType: HASH
+              - AttributeName: status
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: match_time_index
+            KeySchema:
+              - AttributeName: namespace
+                KeyType: HASH
+              - AttributeName: matched_unixtime
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    DynamoDBUserTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-${self:service}-users
+        AttributeDefinitions:
+          - AttributeName: namespace
+            AttributeType: S
+          - AttributeName: user_id
+            AttributeType: S
+          - AttributeName: rate
+            AttributeType: "N"
+        KeySchema:
+          - AttributeName: namespace
+            KeyType: HASH
+          - AttributeName: user_id
+            KeyType: RANGE
+        LocalSecondaryIndexes:
+          - IndexName: rate_index
+            KeySchema:
+              - AttributeName: namespace
+                KeyType: HASH
+              - AttributeName: rate
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
