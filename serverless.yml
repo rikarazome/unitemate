@@ -29,6 +29,10 @@ provider:
             - !Join ["", [!GetAtt DynamoDBMatchTable.Arn, "/index/*"]]
             - !GetAtt DynamoDBUserTable.Arn
             - !Join ["", [!GetAtt DynamoDBUserTable.Arn, "/index/*"]]
+  environment:
+    MATCH_QUEUE: !Ref DynamoDBMatchQueue
+    MATCH_TABLE: !Ref DynamoDBMatchTable
+    USER_TABLE: !Ref DynamoDBUserTable
 
 package:
   individually: true
