@@ -58,7 +58,7 @@ functions:
           method: post
           private: true
   queue_info: # キューの情報を取得するAPI
-    handler: app/dequeue.handle
+    handler: app/queue_info.handle
     events:
       - http:
           path: v1/queue
