@@ -22,3 +22,7 @@ package:
 functions:
   hello:
     handler: app/hello.handle
+
+plugins:
+  - serverless-python-requirements
+  - serverless-prune-plugin
