@@ -80,6 +80,20 @@ functions:
           private: true
   match_judge: # 試合終了後、試合結果を判定するバッチ
     handler: app/match_judge.handle
+  user_upsert: # ユーザを作成・更新するAPI
+    handler: app/user_upsert.handle
+    events:
+      - http:
+          path: v1/users/{user_id}
+          method: post
+          private: true
+  user_delete: # ユーザを削除するAPI
+    handler: app/user_upsert.handle
+    events:
+      - http:
+          path: v1/users/{user_id}/_delete
+          method: post
+          private: true
   user_info: # ユーザ情報を返すAPI
     handler: app/user_info.handle
     events:
